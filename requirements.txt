@@ -4,3 +4,5 @@ numpy
 pyobjc-framework-Quartz
 pyobjc-framework-Cocoa
 pynput
+mlx-vlm
+huggingface_hub
