@@ -18,18 +18,24 @@ class ReflexAgent:
         
         try:
             while self.is_running and self.input.is_active():
-                # Primitive "Loop": just walk forward
-                # Later, this will read "Vision" state
-                print("Action: Walk Forward")
-                self.input.press_key('w', duration=0.5)
+                # Non-blocking control loop (60Hz target)
+                start_time = time.time()
                 
-                # Small pause to look human-ish
-                time.sleep(0.1)
+                # Brain Layer: Decide functionality
+                # For now: Just hold W
+                self.input.key_down('w')
+                
+                # Maintain loop rate
+                # Sleep small amount to yield but not block for long
+                elapsed = time.time() - start_time
+                sleep_time = max(0, (1.0/60.0) - elapsed)
+                time.sleep(sleep_time)
 
         except KeyboardInterrupt:
             pass
         finally:
             print("Reflex Agent Stopped.")
+            self.input.key_up('w') # Release key on exit
 
 if __name__ == "__main__":
     agent = ReflexAgent()

@@ -42,7 +42,15 @@ def main():
     try:
         while True:
             # Capture frame
-            frame = cap.capture_region(window_region)
+            if isinstance(window_region, dict) and 'window_id' in window_region:
+                frame = cap.capture_window_exclusive(window_region['window_id'])
+            else:
+                frame = cap.capture_region(window_region)
+            
+            if frame is None:
+                # Window might be minimized or closed
+                time.sleep(0.1)
+                continue
             
             # FPS Calculation
             curr_time = time.time()

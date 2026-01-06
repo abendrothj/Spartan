@@ -1,6 +1,16 @@
 import Quartz
 
-from AppKit import NSRunningApplication, NSApplicationActivateIgnoringOtherApps
+from AppKit import NSScreen, NSRunningApplication, NSApplicationActivateIgnoringOtherApps
+
+def get_screen_scale():
+    """
+    Returns the backing scale factor of the main screen.
+    Usually 2.0 for Retina displays, 1.0 for standard.
+    """
+    screen = NSScreen.mainScreen()
+    if screen:
+        return screen.backingScaleFactor()
+    return 1.0
 
 def get_minecraft_window(target_title="Minecraft", ignore_titles=None):
     """
@@ -14,6 +24,9 @@ def get_minecraft_window(target_title="Minecraft", ignore_titles=None):
     if ignore_titles is None:
         ignore_titles = []
 
+    # Get scaling factor (Retina Display handling)
+    scale_factor = get_screen_scale()
+    
     # Get all on-screen windows
     options = Quartz.kCGWindowListOptionOnScreenOnly
     window_list = Quartz.CGWindowListCopyWindowInfo(options, Quartz.kCGNullWindowID)
@@ -24,6 +37,7 @@ def get_minecraft_window(target_title="Minecraft", ignore_titles=None):
         title = window.get('kCGWindowName', '')
         owner = window.get('kCGWindowOwnerName', '')
         pid = window.get('kCGWindowOwnerPID')
+        window_id = window.get('kCGWindowNumber')
         
         full_title = str(title).lower()
         full_owner = str(owner).lower()
@@ -38,12 +52,15 @@ def get_minecraft_window(target_title="Minecraft", ignore_titles=None):
         if target in full_title or target in full_owner:
             bounds = window.get('kCGWindowBounds')
             if bounds:
+                # Apply Retina scaling
+                # Quartz returns 'points', mss expects 'pixels'
                 return {
-                    'top': int(bounds['Y']),
-                    'left': int(bounds['X']),
-                    'width': int(bounds['Width']),
-                    'height': int(bounds['Height']),
-                    'pid': int(pid)
+                    'top': int(bounds['Y'] * scale_factor),
+                    'left': int(bounds['X'] * scale_factor),
+                    'width': int(bounds['Width'] * scale_factor),
+                    'height': int(bounds['Height'] * scale_factor),
+                    'pid': int(pid),
+                    'window_id': int(window_id)
                 }
     
     # If not found during loop, print what we saw to debug
